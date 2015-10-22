@@ -28,8 +28,8 @@ repositories {
 Then, add Digitus to your dependencies:
 
 ```Gradle
-dependencies {
-    compile 'com.afollestad:digitus:0.1.0'
+compile('com.afollestad:digitus:0.1.0@aar') {
+    transitive = true
 }
 ```
 
