@@ -8,6 +8,10 @@ On API levels below Marshmallow, it will fall back to a password dialog.
 **Note**: this library is powered by [material-dialogs](https://github.com/afollestad/material-dialogs),
 depending on this library will automatically depend on Material Dialogs. 
 
+# Sample
+
+Check out the sample project's code! You can also [download the latest APK](https://github.com/afollestad/digitus/raw/master/sample/sample.apk).
+
 # Gradle Dependency
 
 All the Gradle code below goes in `build.gradle` of your module (e.g. `app`), **not** `build.gradle` in
