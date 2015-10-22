@@ -10,7 +10,24 @@ depending on this library will automatically depend on Material Dialogs.
 
 # Gradle Dependency
 
+All the Gradle code below goes in `build.gradle` of your module (e.g. `app`), **not** `build.gradle` in
+the base of your project.
 
+First, add JitPack.io to your dependencies:
+
+```Gradle
+repositories {
+    maven { url "https://jitpack.io" }
+}
+```
+
+Then, add Digitus to your dependencies:
+
+```Gradle
+dependencies {
+    compile 'com.afollestad:digitus:0.1.0'
+}
+```
 
 # Testing Fingerprints from an Emulator
 
