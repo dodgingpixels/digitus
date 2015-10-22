@@ -28,8 +28,10 @@ repositories {
 Then, add Digitus to your dependencies:
 
 ```Gradle
-compile('com.afollestad:digitus:0.1.0@aar') {
-    transitive = true
+dependencies {
+    compile('com.afollestad:digitus:0.1.0@aar') {
+        transitive = true
+    }
 }
 ```
 
@@ -47,14 +49,15 @@ adb -e emu finger touch finger-id
 
 # Tutorial
 
-1. Initialization and De-initialization
-    1. Initialization
-    2. Permissions Result
-    3. De-initialization
-2. Callbacks
-    1. Ready
-    2. Registration Needed
-    3. Validate Password
+1. [Initialization and De-initialization](https://github.com/afollestad/digitus#initialization-and-de-initialization)
+    1. [Initialization](https://github.com/afollestad/digitus#initialization)
+    2. [Permissions Result](https://github.com/afollestad/digitus#permissions-results)
+    3. [De-initialization](https://github.com/afollestad/digitus#de-initialization)
+2. [Callbacks](https://github.com/afollestad/digitus#callbacks)
+    1. [Ready](https://github.com/afollestad/digitus#ready)
+    2. [Registration Needed](https://github.com/afollestad/digitus#registration-needed)
+    3. [Validate Password](https://github.com/afollestad/digitus#validate-password)
+3. [Garbage Collection Issues](https://github.com/afollestad/digitus#garbage-collection-issues)
     
 ---
     
@@ -65,7 +68,7 @@ adb -e emu finger touch finger-id
 Before you can do anything with Digitus, you need to initialize it:
 
 ```java
-Digitus.init(this, getString(R.string.app_name), 6969);
+Digitus.init(this, getString(R.string.app_name), 69);
 ```
 
 The first parameter, where `this` is passed above, must be an `Activity` instance which implements
@@ -76,14 +79,16 @@ for the encryption cipher. Don't worry about what that means too much, it should
 your app.
 
 The last parameter, is a request code which gets passed back to the Activity later (in the section below).
-That should also be a unique integer that you don't use for permission requests elsewhere.
+That should also be a unique integer that you don't use for permission requests elsewhere. For checking
+permissions specifically, request codes generally need to be 2 digits, rather than 4. Otherwise it
+will crash and tell you it only uses the lower 8 bits.
 
 ### Permissions Result
 
 On Marshmallow, Digitus will automatically request the `USE_FINGERPRINT` permission from Android for you.
 You should still include the permission in your `AndroidManifest.xml` file (like the sample project).
 
-Permission will make this request when you make a call to `init(int, String, int)`. You need to receive
+Digitus will make this request when you make a call to `init(int, String, int)`. You need to receive
 this result by overriding the `onRequestPermissionsResult(int, String[], int[])` method in your `Activity`:
 
 ```java
@@ -150,7 +155,7 @@ there are no fingerprints registered on the device.
 Digitus has a method called `openSecuritySettings()` which allows you to open the System Settings
 page where the user can do so, if they choose.
 
-```
+```java
 @Override
 public void onDigitusRegistrationNeeded(Digitus digitus) {
     // Digitus needs you to register fingerprints.
@@ -161,6 +166,7 @@ public void onDigitusRegistrationNeeded(Digitus digitus) {
     digitus.openSecuritySettings();
 }
 ```
+
 If you weren't using `openSecuritySettings()` from within a Digitus callback method, you can do
 it like this:
 
@@ -181,6 +187,7 @@ In the callback, your app would need to validate their password (determine if it
 You notify Digitus if it's correct or not using `notifyPasswordValidation(boolean)`.
 
 ```java
+@Override
 public void onDigitusValidatePassword(Digitus digitus, String password) {
     // The password is correct if they entered "password" as the password
     digitus.notifyPasswordValidation(password.equals("password"));
@@ -194,3 +201,36 @@ Again, there's a way to notify Digitus outside of a Digitus callback method.
 ```java
 Digitus.get().notifyPasswordValidation(boolean);
 ```
+
+# Garbage Collection Issues
+
+If you run into issues with `Digitus.get()` returning null even after `init()`, Java might be garbage
+collecting the instance because it thinks it's no longer in use.
+
+A solution to this is saving a reference to `Digitus` in your `Activity`. For an example:
+
+
+```Java
+public class MainActivity extends AppCompatActivity implements DigitusCallback {
+
+    private Digitus mDigitus;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        mDigitus = Digitus.init(this, getString(R.string.app_name), 69);
+    }
+    
+    // ... other callback methods and stuff
+    
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDigitus = null;
+        Digitus.deinit();
+    }
+}
+```
+
+Now, whenever you make calls, you can reference `mDigitus` instead of `Digitus.get()`.

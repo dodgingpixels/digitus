@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
     @Override
     protected void onResume() {
         super.onResume();
-        Digitus.init(this, getString(R.string.app_name), 6969);
+        Digitus.init(this, getString(R.string.app_name), 69);
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,7 +92,14 @@ public void onDigitusRegistrationNeeded(Digitus digitus) {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Digitus.get().notifyPasswordValidation(password.equals("password"));
+
+                // notifyPasswordValidation must be invoked from the UI thread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Digitus.get().notifyPasswordValidation(password.equals("password"));
+                    }
+                });
             }
         }).start();
     }
