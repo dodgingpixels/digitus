@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        Digitus.handleResult(requestCode, permissions, grantResults);
+        Digitus.get().handleResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -56,19 +56,19 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
         mButton.setEnabled(true);
     }
 
-    @Override
-    public void onDigitusRegistrationNeeded(Digitus digitus) {
-        mStatus.setText(R.string.status_registration_needed);
-        mButton.setText(R.string.open_security_settings);
-        mButton.setEnabled(true);
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mButton.setText(R.string.begin_authentication);
-                Digitus.get().openSecuritySettings();
-            }
-        });
-    }
+@Override
+public void onDigitusRegistrationNeeded(Digitus digitus) {
+    mStatus.setText(R.string.status_registration_needed);
+    mButton.setText(R.string.open_security_settings);
+    mButton.setEnabled(true);
+    mButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            mButton.setText(R.string.begin_authentication);
+            Digitus.get().openSecuritySettings();
+        }
+    });
+}
 
     @Override
     public void onDigitusAuthenticated(Digitus digitus) {
@@ -82,7 +82,18 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
     }
 
     @Override
-    public void onDigitusValidatePassword(Digitus digitus, String password) {
-        digitus.notifyPasswordValidation(password.equals("password"));
+    public void onDigitusValidatePassword(Digitus digitus, final String password) {
+        // Start a background thread to simulate 3 seconds of background processing, e.g. contacting a server
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Digitus.get().notifyPasswordValidation(password.equals("password"));
+            }
+        }).start();
     }
 }

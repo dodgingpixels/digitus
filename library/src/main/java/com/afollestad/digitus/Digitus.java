@@ -115,13 +115,13 @@ public class Digitus extends DigitusBase {
         }
     }
 
-    public static void handleResult(int requestCode, String[] permissions, int[] state) {
-        if (requestCode == mInstance.mRequestCode && permissions != null &&
+    public void handleResult(int requestCode, String[] permissions, int[] state) {
+        if (requestCode == mRequestCode && permissions != null &&
                 permissions[0].equals(Manifest.permission.USE_FINGERPRINT)) {
             if (state[0] == PackageManager.PERMISSION_GRANTED) {
                 finishInit();
             } else {
-                mInstance.mCallback.onDigitusError(mInstance, new PermissionDeniedError());
+                mInstance.mCallback.onDigitusError(this, new PermissionDeniedError());
             }
         }
     }
