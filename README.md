@@ -51,7 +51,7 @@ adb -e emu finger touch finger-id
 
 1. [Initialization and De-initialization](https://github.com/afollestad/digitus#initialization-and-de-initialization)
     1. [Initialization](https://github.com/afollestad/digitus#initialization)
-    2. [Permissions Result](https://github.com/afollestad/digitus#permissions-results)
+    2. [Permissions Result](https://github.com/afollestad/digitus#permissions-result)
     3. [De-initialization](https://github.com/afollestad/digitus#de-initialization)
 2. [Callbacks](https://github.com/afollestad/digitus#callbacks)
     1. [Ready](https://github.com/afollestad/digitus#ready)
