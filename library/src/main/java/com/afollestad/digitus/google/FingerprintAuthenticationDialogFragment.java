@@ -173,10 +173,10 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     }
 
     private void verifyPassword() {
-        MaterialDialog dialog = (MaterialDialog) getDialog();
-        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
-        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(false);
-        mCallback.onDigitusValidatePassword(Digitus.get(), mPassword.getText().toString());
+//        TODO MaterialDialog dialog = (MaterialDialog) getDialog();
+//        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+//        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(false);
+//        mCallback.onDigitusValidatePassword(Digitus.get(), mPassword.getText().toString());
     }
 
     public void notifyPasswordValidation(boolean valid) {

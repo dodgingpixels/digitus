@@ -7,11 +7,9 @@ public interface DigitusCallback {
 
     void onDigitusReady(Digitus digitus);
 
-    void onDigitusRegistrationNeeded(Digitus digitus);
+    void onDigitusListening(boolean newFingerprint);
 
     void onDigitusAuthenticated(Digitus digitus);
 
-    void onDigitusError(Digitus digitus, Exception e);
-
-    void onDigitusValidatePassword(Digitus digitus, String password);
+    void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e);
 }
