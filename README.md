@@ -103,7 +103,6 @@ method in your `Activity`:
 @Override
 public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    
     // Notify Digitus of the result
     Digitus.get().handleResult(requestCode, permissions, grantResults);
 }
@@ -117,7 +116,7 @@ Digitus will send `PERMISSION_DENIED` to `onDigitusError()` in your callback.
 
 De-initialization allows Digitus to help Java recycle resources faster, and avoid memory leaks on Android.
 It also makes a call to `stopListening()` (discussed below) if necessary, which avoids locking the fingerprint
-sensor from other apps. 
+sensor from other apps and your lockscreen.
 
 ```java
 Digitus.deinit();
@@ -163,13 +162,13 @@ will automatically do this for you.
 ### Listening
 
 The `onDigitusListening(boolean)` callback method is invoked when Digitus has started listening
-for fingerprints. The boolean parameter `newFingerprint` is true if the lockscreen has been disabled
+for fingerprints. It's generally a good time to update any UI that indicates the user should press
+their finger to the sensor.
+
+The `newFingerprint` boolean parameter is true if the lockscreen has been disabled
   or reset after the key was generated, or if a fingerprint got enrolled after the key was generated.
   Generally you *should* fallback to using a password in this case, and let them use a fingerprint next time
   (e.g. with a checkbox).
-  
-When this method is called, it's generally a good time to update any UI that indicates the user should
-press their finger on the imprint sensor.
 
 ```java
 @Override
@@ -181,7 +180,7 @@ public void onDigitusListening(boolean newFingerprint) {
 ### Authenticated
 
 The `onDigitusAuthenticated(Digitus)` callback method is pretty straight forward. It's called when the
-user's fingerprint was successfully recognized. After this point, Digitus automatically stopped
+user's fingerprint was successfully recognized. After this point, Digitus automatically stops
 listening for fingerprints.
 
 ```java
@@ -253,7 +252,16 @@ public class MainActivity extends AppCompatDialog implements FingerprintDialog.C
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Show a FingerprintDialog
-        FingerprintDialog.show(this, getString(R.string.app_name), 69);
+        FingerprintDialog.show(this,        // FragmentActivity, or AppCompatActivity 
+            getString(R.string.app_name),   // Unique key name
+            69);                            // Permission request code
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);    
+        // Notify Digitus of the result
+        Digitus.get().handleResult(requestCode, permissions, grantResults);
     }
     
     @Override
@@ -262,12 +270,12 @@ public class MainActivity extends AppCompatDialog implements FingerprintDialog.C
     }
 
     @Override
-    public void onFingerprintDialogVerifyPassword(final FingerprintDialog dialog, final String password) {
+    public void onFingerprintDialogVerifyPassword(FingerprintDialog dialog, final String password) {
         // Simulate server contact
         mButton.postDelayed(new Runnable() {
             @Override
             public void run() {
-                dialog.notifyPasswordValidation(password.equals("password"));
+                Digitus.get().notifyPasswordValidation(password.equals("password"));
             }
         }, 1500);
     }
