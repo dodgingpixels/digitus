@@ -52,6 +52,7 @@ class AuthenticationHandler extends FingerprintManager.AuthenticationCallback {
             if (mDigitus.mCallback != null)
                 mDigitus.mCallback.onDigitusError(mDigitus, DigitusErrorType.UNRECOVERABLE_ERROR, new Exception(errString.toString()));
         }
+        stop();
     }
 
     @Override
