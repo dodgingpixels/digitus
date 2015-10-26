@@ -35,6 +35,8 @@ dependencies {
 }
 ```
 
+[![Release](https://img.shields.io/github/release/afollestad/digitius.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
+
 # Testing Fingerprints from an Emulator
 
 The stock Android emulator allows you to test Nexus Imprint. If you create a Nexus 5X emulator,
