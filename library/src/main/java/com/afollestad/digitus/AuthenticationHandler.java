@@ -2,6 +2,7 @@ package com.afollestad.digitus;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.CancellationSignal;
@@ -16,12 +17,14 @@ class AuthenticationHandler extends FingerprintManager.AuthenticationCallback {
     private CancellationSignal mCancellationSignal;
     private boolean mSelfCancelled;
     private FingerprintManager.CryptoObject mCryptoObject;
+    private Context mContext;
 
     private Digitus mDigitus;
 
     public AuthenticationHandler(Digitus digitus, FingerprintManager.CryptoObject cryptoObject) {
         mDigitus = digitus;
         mCryptoObject = cryptoObject;
+        mContext = digitus.mContext.getApplicationContext();
     }
 
     public boolean isReadyToStart() {
@@ -53,7 +56,7 @@ class AuthenticationHandler extends FingerprintManager.AuthenticationCallback {
                 mDigitus.mCallback.onDigitusError(mDigitus, DigitusErrorType.UNRECOVERABLE_ERROR, new Exception(errString.toString()));
         }
         stop();
-        mDigitus.mFingerprintManager = mDigitus.mContext.getSystemService(FingerprintManager.class);
+        mDigitus.mFingerprintManager = mContext.getSystemService(FingerprintManager.class);
     }
 
     @Override

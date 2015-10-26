@@ -37,8 +37,8 @@ class DigitusBase {
         mContext = context;
         mKeyName = keyName;
         mCallback = callback;
-        mInputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
+        mInputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mKeyguardManager = context.getSystemService(KeyguardManager.class);
             mFingerprintManager = context.getSystemService(FingerprintManager.class);
@@ -82,7 +82,7 @@ class DigitusBase {
     protected Cipher mCipher;
     protected DigitusCallback mCallback;
 
-    public void setCallback(DigitusCallback callback) {
+    public void setCallback(@NonNull DigitusCallback callback) {
         this.mCallback = callback;
     }
 

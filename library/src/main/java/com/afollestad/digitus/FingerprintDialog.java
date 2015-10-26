@@ -2,7 +2,6 @@ package com.afollestad.digitus;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -74,9 +73,9 @@ public class FingerprintDialog extends DialogFragment
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("stage", mStage);
     }
 
     @NonNull
@@ -84,6 +83,8 @@ public class FingerprintDialog extends DialogFragment
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         if (getArguments() == null || !getArguments().containsKey("key_name"))
             throw new IllegalStateException("FingerprintDialog must be shown with show(Activity, String, int).");
+        else if (savedInstanceState != null)
+            mStage = (Stage) savedInstanceState.getSerializable("stage");
 
         MaterialDialog dialog = new MaterialDialog.Builder(getActivity())
                 .title(R.string.sign_in)
@@ -95,15 +96,6 @@ public class FingerprintDialog extends DialogFragment
                     @Override
                     public void onClick(@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) {
                         materialDialog.dismiss();
-                    }
-                })
-                .showListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialog) {
-                        mDigitus = Digitus.init(getActivity(),
-                                getArguments().getString("key_name", ""),
-                                getArguments().getInt("request_code", -1),
-                                FingerprintDialog.this);
                     }
                 })
                 .onNegative(new MaterialDialog.SingleButtonCallback() {
@@ -135,31 +127,24 @@ public class FingerprintDialog extends DialogFragment
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
-        super.onDismiss(dialog);
-        Digitus.deinit();
-        mDigitus = null;
-    }
-
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        super.onCancel(dialog);
-        Digitus.deinit();
-        mDigitus = null;
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        updateStage(null);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (mStage == Stage.FINGERPRINT && mDigitus != null)
-            mDigitus.startListening();
+        mDigitus = Digitus.init(getActivity(),
+                getArguments().getString("key_name", ""),
+                getArguments().getInt("request_code", -1),
+                FingerprintDialog.this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mDigitus != null)
-            mDigitus.stopListening();
+        Digitus.deinit();
     }
 
     @Override
@@ -187,10 +172,14 @@ public class FingerprintDialog extends DialogFragment
         mDigitus.stopListening();
     }
 
-    private void verifyPassword() {
+    private void toggleButtonsEnabled(boolean enabled) {
         MaterialDialog dialog = (MaterialDialog) getDialog();
-        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
-        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(false);
+        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(enabled);
+        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(enabled);
+    }
+
+    private void verifyPassword() {
+        toggleButtonsEnabled(false);
         mCallback.onFingerprintDialogVerifyPassword(this, mPassword.getText().toString());
     }
 
@@ -198,8 +187,7 @@ public class FingerprintDialog extends DialogFragment
         final MaterialDialog dialog = (MaterialDialog) getDialog();
         final View positive = dialog.getActionButton(DialogAction.POSITIVE);
         final View negative = dialog.getActionButton(DialogAction.NEGATIVE);
-        positive.setEnabled(true);
-        negative.setEnabled(true);
+        toggleButtonsEnabled(true);
 
         if (valid) {
             if (mStage == Stage.NEW_FINGERPRINT_ENROLLED &&
@@ -307,6 +295,7 @@ public class FingerprintDialog extends DialogFragment
 
     @Override
     public void onDigitusAuthenticated(Digitus digitus) {
+        toggleButtonsEnabled(false);
         mFingerprintStatus.removeCallbacks(mResetErrorTextRunnable);
         mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_success);
         mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.success_color));
@@ -328,7 +317,6 @@ public class FingerprintDialog extends DialogFragment
                 break;
             case UNRECOVERABLE_ERROR:
             case PERMISSION_DENIED:
-                // TODO show error above password
                 showError(e.getMessage());
                 mFingerprintIcon.postDelayed(new Runnable() {
                     @Override
@@ -338,7 +326,8 @@ public class FingerprintDialog extends DialogFragment
                 }, ERROR_TIMEOUT_MILLIS);
                 break;
             case REGISTRATION_NEEDED:
-                // TODO
+                mPasswordDescriptionTextView.setText(R.string.no_fingerprints_registered);
+                goToBackup(null);
                 break;
             case HELP_ERROR:
                 showError(e.getMessage());
