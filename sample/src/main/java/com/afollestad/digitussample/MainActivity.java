@@ -6,15 +6,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.digitus.Digitus;
 import com.afollestad.digitus.DigitusCallback;
 import com.afollestad.digitus.DigitusErrorType;
+import com.afollestad.digitus.FingerprintDialog;
 
 /**
  * @author Aidan Follestad (afollestad)
  */
-public class MainActivity extends AppCompatActivity implements DigitusCallback {
+public class MainActivity extends AppCompatActivity implements DigitusCallback, FingerprintDialog.Callback {
 
     private TextView mStatus;
     private Button mButton;
@@ -25,6 +27,13 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
         setContentView(R.layout.activity_main);
         mStatus = (TextView) findViewById(R.id.status);
         mButton = (Button) findViewById(R.id.beginAuthentication);
+
+        findViewById(R.id.useDialog).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FingerprintDialog.show(MainActivity.this, getString(R.string.app_name), 69);
+            }
+        });
     }
 
     @Override
@@ -34,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Updates callback, just in case it was moved to the FingerprintDialog.
+                // Otherwise, it was already set when you made a call to init().
+                Digitus.get().setCallback(MainActivity.this);
                 // Starts listening for a fingerprint
                 Digitus.get().startListening();
             }
@@ -129,5 +141,10 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback {
                 mStatus.setText(getString(R.string.status_error, e.getMessage()));
                 break;
         }
+    }
+
+    @Override
+    public void onFingerprintDialogAuthenticated() {
+        Toast.makeText(this, R.string.dialog_authenticated, Toast.LENGTH_LONG).show();
     }
 }

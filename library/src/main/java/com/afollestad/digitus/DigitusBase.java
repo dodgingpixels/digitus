@@ -82,6 +82,10 @@ class DigitusBase {
     protected Cipher mCipher;
     protected DigitusCallback mCallback;
 
+    public void setCallback(DigitusCallback callback) {
+        this.mCallback = callback;
+    }
+
     /**
      * Initialize the {@link Cipher} instance with the created key in the {@link #recreateKey()}
      * method.

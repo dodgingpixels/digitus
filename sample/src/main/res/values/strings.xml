@@ -10,5 +10,7 @@
     <string name="status_listening">Listening for a fingerprint…</string>
     <string name="status_listening_new">Listening for a fingerprint (new)…</string>
     <string name="stop_listening">Stop listening</string>
+    <string name="use_dialog">Use Dialog</string>
+    <string name="dialog_authenticated">Authenticated via dialog!</string>
 
 </resources>

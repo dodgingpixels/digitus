@@ -32,8 +32,9 @@ public class Digitus extends DigitusBase {
         return mInstance;
     }
 
-
     public static Digitus init(@NonNull Activity context, @NonNull String keyName, int requestCode, @NonNull DigitusCallback callback) {
+        if (mInstance != null)
+            deinit();
         mInstance = new Digitus(context, keyName, requestCode, callback);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int granted = ContextCompat.checkSelfPermission(context, Manifest.permission.USE_FINGERPRINT);

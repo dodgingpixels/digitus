@@ -1,29 +1,22 @@
-package com.afollestad.digitus.google;
+package com.afollestad.digitus;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.DialogFragment;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.hardware.fingerprint.FingerprintManager;
-import android.os.Build;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.afollestad.digitus.Digitus;
-import com.afollestad.digitus.DigitusCallback;
-import com.afollestad.digitus.R;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.internal.MDTintHelper;
@@ -33,8 +26,16 @@ import com.afollestad.materialdialogs.internal.MDTintHelper;
  * authentication if fingerprint is not available.
  */
 @SuppressWarnings("ResourceType")
-public class FingerprintAuthenticationDialogFragment extends DialogFragment
-        implements TextView.OnEditorActionListener, FingerprintUiHelper.Callback {
+public class FingerprintDialog extends DialogFragment
+        implements TextView.OnEditorActionListener, DigitusCallback {
+
+    public interface Callback {
+        void onFingerprintDialogAuthenticated();
+    }
+
+    static final long ERROR_TIMEOUT_MILLIS = 1600;
+    static final long SUCCESS_DELAY_MILLIS = 1300;
+    static final String TAG = "[DIGITUS_FPDIALOG]";
 
     private View mFingerprintContent;
     private View mBackupContent;
@@ -42,17 +43,24 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     private CheckBox mUseFingerprintFutureCheckBox;
     private TextView mPasswordDescriptionTextView;
     private TextView mNewFingerprintEnrolledTextView;
+    private ImageView mFingerprintIcon;
+    private TextView mFingerprintStatus;
 
     private Stage mStage = Stage.FINGERPRINT;
+    private Digitus mDigitus;
+    private Callback mCallback;
 
-    private FingerprintManager.CryptoObject mCryptoObject;
-    private FingerprintUiHelper mFingerprintUiHelper;
-    private DigitusCallback mCallback;
+    public FingerprintDialog() {
+    }
 
-    FingerprintUiHelper.FingerprintUiHelperBuilder mFingerprintUiHelperBuilder;
-    InputMethodManager mInputMethodManager;
-
-    public FingerprintAuthenticationDialogFragment() {
+    public static <T extends FragmentActivity & Callback> FingerprintDialog show(T context, String keyName, int requestCode) {
+        FingerprintDialog dialog = new FingerprintDialog();
+        Bundle args = new Bundle();
+        args.putString("key_name", keyName);
+        args.putInt("request_code", requestCode);
+        dialog.setArguments(args);
+        dialog.show(context.getSupportFragmentManager(), TAG);
+        return dialog;
     }
 
     @Override
@@ -61,8 +69,16 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         setRetainInstance(true);
     }
 
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        if (getArguments() == null || !getArguments().containsKey("key_name"))
+            throw new IllegalStateException("FingerprintDialog must be shown with show(Activity, String, int).");
+        mDigitus = Digitus.init(getActivity(),
+                getArguments().getString("key_name", ""),
+                getArguments().getInt("request_code", -1),
+                this);
+
         MaterialDialog dialog = new MaterialDialog.Builder(getActivity())
                 .title(R.string.sign_in)
                 .customView(R.layout.fingerprint_dialog_container, false)
@@ -94,64 +110,50 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         mPassword = (EditText) v.findViewById(R.id.password);
         mPassword.setOnEditorActionListener(this);
         mPasswordDescriptionTextView = (TextView) v.findViewById(R.id.password_description);
-        mUseFingerprintFutureCheckBox = (CheckBox)
-                v.findViewById(R.id.use_fingerprint_in_future_check);
-        mNewFingerprintEnrolledTextView = (TextView)
-                v.findViewById(R.id.new_fingerprint_enrolled_description);
-        if (mFingerprintUiHelperBuilder != null) {
-            mFingerprintUiHelper = mFingerprintUiHelperBuilder.build(
-                    (ImageView) v.findViewById(R.id.fingerprint_icon),
-                    (TextView) v.findViewById(R.id.fingerprint_status), this);
-        }
-        updateStage(dialog);
+        mUseFingerprintFutureCheckBox = (CheckBox) v.findViewById(R.id.use_fingerprint_in_future_check);
+        mNewFingerprintEnrolledTextView = (TextView) v.findViewById(R.id.new_fingerprint_enrolled_description);
+        mFingerprintIcon = (ImageView) v.findViewById(R.id.fingerprint_icon);
+        mFingerprintStatus = (TextView) v.findViewById(R.id.fingerprint_status);
 
-        // If fingerprint authentication is not available, switch immediately to the backup (password) screen.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.USE_FINGERPRINT)
-                        != PackageManager.PERMISSION_GRANTED ||
-                mFingerprintUiHelper == null ||
-                !mFingerprintUiHelper.isFingerprintAuthAvailable()) {
-            goToBackup(dialog);
-        }
+        updateStage(dialog);
 
         return dialog;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        if (mStage == Stage.FINGERPRINT && mFingerprintUiHelper != null)
-            mFingerprintUiHelper.startListening(mCryptoObject);
+    public void onDismiss(DialogInterface dialog) {
+        super.onDismiss(dialog);
+        Digitus.deinit();
+        mDigitus = null;
     }
 
-    public void setStage(Stage stage) {
-        mStage = stage;
+    @Override
+    public void onCancel(DialogInterface dialog) {
+        super.onCancel(dialog);
+        Digitus.deinit();
+        mDigitus = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mStage == Stage.FINGERPRINT)
+            mDigitus.startListening();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mFingerprintUiHelper != null)
-            mFingerprintUiHelper.stopListening();
+        if (mDigitus != null)
+            mDigitus.stopListening();
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mCallback = (DigitusCallback) activity;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mFingerprintUiHelperBuilder = new FingerprintUiHelper.FingerprintUiHelperBuilder(
-                    (FingerprintManager) activity.getSystemService(Context.FINGERPRINT_SERVICE));
-        }
-        mInputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-    }
-
-    /**
-     * Sets the crypto object to be passed in when authenticating with fingerprint.
-     */
-    public void setCryptoObject(FingerprintManager.CryptoObject cryptoObject) {
-        mCryptoObject = cryptoObject;
+        if (!(activity instanceof Callback))
+            throw new IllegalStateException("Activities showing a FingerprintDialog must implement FingerprintDialog.Callback.");
+        mCallback = (Callback) activity;
     }
 
     /**
@@ -163,13 +165,10 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         mStage = Stage.PASSWORD;
         updateStage(dialog);
         mPassword.requestFocus();
-
         // Show the keyboard.
         mPassword.postDelayed(mShowKeyboardRunnable, 500);
-
         // Fingerprint is not used anymore. Stop listening for it.
-        if (mFingerprintUiHelper != null)
-            mFingerprintUiHelper.stopListening();
+        mDigitus.stopListening();
     }
 
     private void verifyPassword() {
@@ -194,7 +193,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
                 mStage = Stage.FINGERPRINT;
             }
             mPassword.setText("");
-            mCallback.onDigitusAuthenticated(Digitus.get());
+            mCallback.onFingerprintDialogAuthenticated();
             dismiss();
         } else {
             mPasswordDescriptionTextView.setText(R.string.password_not_recognized);
@@ -208,7 +207,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     private final Runnable mShowKeyboardRunnable = new Runnable() {
         @Override
         public void run() {
-            mInputMethodManager.showSoftInput(mPassword, 0);
+            if (mDigitus != null)
+                mDigitus.mInputMethodManager.showSoftInput(mPassword, 0);
         }
     };
 
@@ -248,19 +248,6 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         return false;
     }
 
-    @Override
-    public void onAuthenticated() {
-        // Callback from FingerprintUiHelper. Let the activity know that authentication was
-        // successful.
-        mCallback.onDigitusAuthenticated(Digitus.get());
-        dismiss();
-    }
-
-    @Override
-    public void onError() {
-        goToBackup(null);
-    }
-
     /**
      * Enumeration to indicate which authentication method the user is trying to authenticate with.
      */
@@ -268,5 +255,76 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         FINGERPRINT,
         NEW_FINGERPRINT_ENROLLED,
         PASSWORD
+    }
+
+    private void showError(CharSequence error) {
+        mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_error);
+        mFingerprintStatus.setText(error);
+        mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.warning_color));
+        mFingerprintStatus.removeCallbacks(mResetErrorTextRunnable);
+        mFingerprintStatus.postDelayed(mResetErrorTextRunnable, ERROR_TIMEOUT_MILLIS);
+    }
+
+    Runnable mResetErrorTextRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.hint_color));
+            mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_hint));
+            mFingerprintIcon.setImageResource(R.drawable.ic_fp_40px);
+        }
+    };
+
+    // Digitus callbacks
+
+    @Override
+    public void onDigitusReady(Digitus digitus) {
+        // TODO
+    }
+
+    @Override
+    public void onDigitusListening(boolean newFingerprint) {
+        // TODO
+    }
+
+    @Override
+    public void onDigitusAuthenticated(Digitus digitus) {
+        mFingerprintStatus.removeCallbacks(mResetErrorTextRunnable);
+        mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_success);
+        mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.success_color));
+        mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_success));
+        mFingerprintIcon.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mCallback.onFingerprintDialogAuthenticated();
+                dismiss();
+            }
+        }, SUCCESS_DELAY_MILLIS);
+    }
+
+    @Override
+    public void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e) {
+        switch (type) {
+            case UNRECOVERABLE_ERROR:
+            case PERMISSION_DENIED:
+            case FINGERPRINTS_UNSUPPORTED:
+                // TODO show error above password
+                showError(e.getMessage());
+                mFingerprintIcon.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        goToBackup(null);
+                    }
+                }, ERROR_TIMEOUT_MILLIS);
+                break;
+            case REGISTRATION_NEEDED:
+                // TODO
+                break;
+            case HELP_ERROR:
+                showError(e.getMessage());
+                break;
+            case FINGERPRINT_NOT_RECOGNIZED:
+                showError(getResources().getString(R.string.fingerprint_not_recognized));
+                break;
+        }
     }
 }
