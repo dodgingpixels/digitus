@@ -151,8 +151,10 @@ public class FingerprintDialog extends DialogFragment
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if (!(activity instanceof Callback))
+        if (!(activity instanceof Callback)) {
+            Digitus.deinit();
             throw new IllegalStateException("Activities showing a FingerprintDialog must implement FingerprintDialog.Callback.");
+        }
         mCallback = (Callback) activity;
     }
 
