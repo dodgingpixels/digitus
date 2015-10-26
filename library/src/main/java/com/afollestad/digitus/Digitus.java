@@ -58,12 +58,16 @@ public class Digitus extends DigitusBase {
 
     private static void finishInit() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (mInstance.isFingerprintRegistered()) {
+            if (!mInstance.isFingerprintAuthAvailable()) {
+                mInstance.mCallback.onDigitusError(mInstance, DigitusErrorType.FINGERPRINTS_UNSUPPORTED,
+                        new Exception("Fingerprint authentication is not available to this device."));
+            } else if (mInstance.isFingerprintRegistered()) {
                 mInstance.mIsReady = true;
                 mInstance.recreateKey();
                 mInstance.mCallback.onDigitusReady(mInstance);
             } else {
-                mInstance.mCallback.onDigitusError(mInstance, DigitusErrorType.REGISTRATION_NEEDED, new Exception("No fingerprints are registered on this device."));
+                mInstance.mCallback.onDigitusError(mInstance, DigitusErrorType.REGISTRATION_NEEDED,
+                        new Exception("No fingerprints are registered on this device."));
             }
         } else {
             mInstance.mIsReady = true;
