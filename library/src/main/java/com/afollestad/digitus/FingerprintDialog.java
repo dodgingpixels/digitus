@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.view.KeyEvent;
@@ -31,6 +32,8 @@ public class FingerprintDialog extends DialogFragment
 
     public interface Callback {
         void onFingerprintDialogAuthenticated();
+
+        void onFingerprintDialogVerifyPassword(FingerprintDialog dialog, String password);
     }
 
     static final long ERROR_TIMEOUT_MILLIS = 1600;
@@ -61,6 +64,13 @@ public class FingerprintDialog extends DialogFragment
         dialog.setArguments(args);
         dialog.show(context.getSupportFragmentManager(), TAG);
         return dialog;
+    }
+
+    public static <T extends FragmentActivity> FingerprintDialog getVisible(T context) {
+        Fragment frag = context.getSupportFragmentManager().findFragmentByTag(TAG);
+        if (frag != null && frag instanceof FingerprintDialog)
+            return (FingerprintDialog) frag;
+        return null;
     }
 
     @Override
@@ -174,10 +184,10 @@ public class FingerprintDialog extends DialogFragment
     }
 
     private void verifyPassword() {
-//        TODO MaterialDialog dialog = (MaterialDialog) getDialog();
-//        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
-//        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(false);
-//        mCallback.onDigitusValidatePassword(Digitus.get(), mPassword.getText().toString());
+        MaterialDialog dialog = (MaterialDialog) getDialog();
+        dialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+        dialog.getActionButton(DialogAction.NEGATIVE).setEnabled(false);
+        mCallback.onFingerprintDialogVerifyPassword(this, mPassword.getText().toString());
     }
 
     public void notifyPasswordValidation(boolean valid) {
@@ -306,9 +316,11 @@ public class FingerprintDialog extends DialogFragment
     @Override
     public void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e) {
         switch (type) {
+            case FINGERPRINTS_UNSUPPORTED:
+                goToBackup(null);
+                break;
             case UNRECOVERABLE_ERROR:
             case PERMISSION_DENIED:
-            case FINGERPRINTS_UNSUPPORTED:
                 // TODO show error above password
                 showError(e.getMessage());
                 mFingerprintIcon.postDelayed(new Runnable() {

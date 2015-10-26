@@ -147,4 +147,15 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback, 
     public void onFingerprintDialogAuthenticated() {
         Toast.makeText(this, R.string.dialog_authenticated, Toast.LENGTH_LONG).show();
     }
+
+    @Override
+    public void onFingerprintDialogVerifyPassword(final FingerprintDialog dialog, final String password) {
+        // Simulate server contact
+        mButton.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dialog.notifyPasswordValidation(password.equals("password"));
+            }
+        }, 1500);
+    }
 }
