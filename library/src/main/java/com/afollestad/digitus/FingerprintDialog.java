@@ -84,10 +84,6 @@ public class FingerprintDialog extends DialogFragment
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         if (getArguments() == null || !getArguments().containsKey("key_name"))
             throw new IllegalStateException("FingerprintDialog must be shown with show(Activity, String, int).");
-        mDigitus = Digitus.init(getActivity(),
-                getArguments().getString("key_name", ""),
-                getArguments().getInt("request_code", -1),
-                this);
 
         MaterialDialog dialog = new MaterialDialog.Builder(getActivity())
                 .title(R.string.sign_in)
@@ -99,6 +95,15 @@ public class FingerprintDialog extends DialogFragment
                     @Override
                     public void onClick(@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) {
                         materialDialog.dismiss();
+                    }
+                })
+                .showListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+                        mDigitus = Digitus.init(getActivity(),
+                                getArguments().getString("key_name", ""),
+                                getArguments().getInt("request_code", -1),
+                                FingerprintDialog.this);
                     }
                 })
                 .onNegative(new MaterialDialog.SingleButtonCallback() {
@@ -124,8 +129,7 @@ public class FingerprintDialog extends DialogFragment
         mNewFingerprintEnrolledTextView = (TextView) v.findViewById(R.id.new_fingerprint_enrolled_description);
         mFingerprintIcon = (ImageView) v.findViewById(R.id.fingerprint_icon);
         mFingerprintStatus = (TextView) v.findViewById(R.id.fingerprint_status);
-
-        updateStage(dialog);
+        mFingerprintStatus.setText(R.string.initializing);
 
         return dialog;
     }
@@ -147,7 +151,7 @@ public class FingerprintDialog extends DialogFragment
     @Override
     public void onResume() {
         super.onResume();
-        if (mStage == Stage.FINGERPRINT)
+        if (mStage == Stage.FINGERPRINT && mDigitus != null)
             mDigitus.startListening();
     }
 
@@ -290,12 +294,15 @@ public class FingerprintDialog extends DialogFragment
 
     @Override
     public void onDigitusReady(Digitus digitus) {
-        // TODO
+        digitus.startListening();
     }
 
     @Override
     public void onDigitusListening(boolean newFingerprint) {
-        // TODO
+        mFingerprintStatus.setText(R.string.fingerprint_hint);
+        if (newFingerprint)
+            mStage = Stage.NEW_FINGERPRINT_ENROLLED;
+        updateStage(null);
     }
 
     @Override

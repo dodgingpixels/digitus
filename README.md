@@ -29,7 +29,7 @@ Then, add Digitus to your dependencies:
 
 ```Gradle
 dependencies {
-    compile('com.afollestad:digitus:0.1.0@aar') {
+    compile('com.afollestad:digitus:0.2.0@aar') {
         transitive = true
     }
 }
@@ -57,9 +57,11 @@ adb -e emu finger touch finger-id
     3. [De-initialization](https://github.com/afollestad/digitus#de-initialization)
 2. [Callbacks](https://github.com/afollestad/digitus#callbacks)
     1. [Ready](https://github.com/afollestad/digitus#ready)
-    2. [Registration Needed](https://github.com/afollestad/digitus#registration-needed)
-    3. [Validate Password](https://github.com/afollestad/digitus#validate-password)
-3. [Garbage Collection Issues](https://github.com/afollestad/digitus#garbage-collection-issues)
+    2. [Listening](https://github.com/afollestad/digitus#listening)
+    3. [Authenticated](https://github.com/afollestad/digitus#authenticated)
+    4. [Error](https://github.com/afollestad/digitus#error)
+3. [FingerprintDialog](https://github.com/afollestad/digitus#fingerprint-dialog)
+4. [Misc](https://github.com/afollestad/digitus#misc)
     
 ---
     
@@ -70,45 +72,52 @@ adb -e emu finger touch finger-id
 Before you can do anything with Digitus, you need to initialize it:
 
 ```java
-Digitus.init(this, getString(R.string.app_name), 69);
+Digitus.init(this,                  // context 
+    getString(R.string.app_name),   // key name 
+    69,                             // permission request code
+    this);                          // callback
 ```
 
-The first parameter, where `this` is passed above, must be an `Activity` instance which implements
-the `DigitusCallback` interface. 
+The first parameter, where `this` is passed above, is just an `Activity` instance.
+It's used to retrieve resources and request the `USE_FINGERPRINT` permission.
 
-The second parameter, where the name of the app is passed, is a unique string used as the key name 
-for the encryption cipher. Don't worry about what that means too much, it should just be unique for
-your app.
+The second parameter should be a unique string used as the key name for the encryption cipher. 
+Don't worry about what that means too much, it should just be unique for your app.
 
-The last parameter, is a request code which gets passed back to the Activity later (in the section below).
-That should also be a unique integer that you don't use for permission requests elsewhere. For checking
-permissions specifically, request codes generally need to be 2 digits, rather than 4. Otherwise it
-will crash and tell you it only uses the lower 8 bits.
+The third parameter is a request code which gets passed back to the `Activity` in the
+ first parameter later. It should be a unique integer that you don't use for permission 
+ requests elsewhere in the same Activity. It should be an 8-bit (2 in length) integer.
+
+The fourth parameter is a callback that receives certain events that are discussed in [Callbacks](https://github.com/afollestad/digitus#callbacks).
 
 ### Permissions Result
 
-On Marshmallow, Digitus will automatically request the `USE_FINGERPRINT` permission from Android for you.
-You should still include the permission in your `AndroidManifest.xml` file (like the sample project).
+On Marshmallow, Digitus will automatically request the `USE_FINGERPRINT` permission from the device for you.
+You should also include the permission in your `AndroidManifest.xml` file (like the sample project).
 
-Digitus will make this request when you make a call to `init(int, String, int)`. You need to receive
-this result by overriding the `onRequestPermissionsResult(int, String[], int[])` method in your `Activity`:
+Digitus will make this request when you make a call to `init(Activity, String, int, DigitusCallback)`. 
+You need to receive the result by overriding the `onRequestPermissionsResult(int, String[], int[])` 
+method in your `Activity`:
 
 ```java
 @Override
 public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    
     // Notify Digitus of the result
     Digitus.get().handleResult(requestCode, permissions, grantResults);
 }
 ```
 
-The above implementation of `onRequestPermissionsResult(int, String[], int[])` does what you need 
-to do. It notifies Digitus if the user allowed the app to access their fingerprint sensor. If not,
-Digitus will fallback to using password authentication.
+The above implementation of `onRequestPermissionsResult(int, String[], int[])` does all that you need 
+to do here. It notifies Digitus if the user allowed the app to access their fingerprint sensor. If not,
+Digitus will send `PERMISSION_DENIED` to `onDigitusError()` in your callback.
 
 ### De-initialization
 
 De-initialization allows Digitus to help Java recycle resources faster, and avoid memory leaks on Android.
+It also makes a call to `stopListening()` (discussed below) if necessary, which avoids locking the fingerprint
+sensor from other apps. 
 
 ```java
 Digitus.deinit();
@@ -117,122 +126,184 @@ Digitus.deinit();
 You'll want to call this method when you're done with Digitus. It's good to put it in `onDestroy()`
 of your `Activity`, or `onPause()` if you remember to initialize Digitus again in `onResume()`.
 
+It's recommend that you try to make a call to this method even in the case of a
+crash in your app (e.g. using try/catch/finally).
+
 ---
 
 # Callbacks
 
-Digitus has five callbacks in total, but only three of them really need explaining. The other two signal
-when authentication is successful, or when an error occurs.
-
 ### Ready
 
 The `onDigitusReady(Digitus)` callback method is invoked when Digitus has finished the 
-initialization process. At this point, you are able to begin authentication at any time.
-
-When you want to begin authentication, you use the `beginAuthentication()` method:
+initialization process. At this point, you are able to start listening for fingerprints 
+at any time.
 
 ```java
 @Override
 public void onDigitusReady(Digitus digitus) {
     // Digitus is ready for authentication.
     // Here, you could enable UI that starts it, hide progress indicators/dialogs, etc.
-    // Otherwise, you could immediately start authentication:
+    // Otherwise, you could immediately start listening for fingerprints:
     
-    digitus.beginAuthentication();
+    digitus.startListening();
 }
 ```
 
-If you weren't using `beginAuthentication()` from within a Digitus callback method (e.g. if it was 
+If you weren't using `startListening()` from within a Digitus callback method (e.g. if it was 
 in  a button click event), you can do it like this:
 
 ```java
-Digitus.get().beginAuthentication();
+Digitus.get().startListening();
 ```
 
-### Registration Needed
+If you wanted to stop listening, you can make a call to `stopListening()`. `Digitus.deinit()`
+will automatically do this for you.
 
-The `onDigitusRegistrationNeeded(Digitus)` callback method is invoked when Digitus determines
-there are no fingerprints registered on the device.
+### Listening
 
-Digitus has a method called `openSecuritySettings()` which allows you to open the System Settings
-page where the user can do so, if they choose.
+The `onDigitusListening(boolean)` callback method is invoked when Digitus has started listening
+for fingerprints. The boolean parameter `newFingerprint` is true if the lockscreen has been disabled
+  or reset after the key was generated, or if a fingerprint got enrolled after the key was generated.
+  Generally you *should* fallback to using a password in this case, and let them use a fingerprint next time
+  (e.g. with a checkbox).
+  
+When this method is called, it's generally a good time to update any UI that indicates the user should
+press their finger on the imprint sensor.
 
 ```java
 @Override
-public void onDigitusRegistrationNeeded(Digitus digitus) {
-    // Digitus needs you to register fingerprints.
-    // Here, you would probably want to notify the user, and wait to invoke the method used below
-    // until they agree to it.
-
-    // Opens the security settings page in the System Settings where fingerprints can be added.
-    digitus.openSecuritySettings();
+public void onDigitusListening(boolean newFingerprint) {
+    // TODO update UI to indicate the user can imprint their finger
 }
 ```
 
-If you weren't using `openSecuritySettings()` from within a Digitus callback method, you can do
-it like this:
+### Authenticated
 
-```java
-Digitus.get().openSecuritySettings();
-```
-
-### Validate Password
-
-If the user doesn't want to authenticate with their fingerprint, or the device doesn't support 
-fingerprints (if it doesn't have a sensor or the API level is too old), Digitus will fallback to
-using password authentication.
-
-When it falls back to password authentication, an input field will be shown to the user. When they 
-submit, this callback is invoked.
-
-In the callback, your app would need to validate their password (determine if it's correct or not). 
-You notify Digitus if it's correct or not using `notifyPasswordValidation(boolean)`.
+The `onDigitusAuthenticated(Digitus)` callback method is pretty straight forward. It's called when the
+user's fingerprint was successfully recognized. After this point, Digitus automatically stopped
+listening for fingerprints.
 
 ```java
 @Override
-public void onDigitusValidatePassword(Digitus digitus, String password) {
-    // The password is correct if they entered "password" as the password
-    digitus.notifyPasswordValidation(password.equals("password"));
+public void onDigitusAuthenticated(Digitus digitus) {
+    // TODO authentication was successful
 }
 ```
 
-You'd probably want to validate the password with a server or something in most cases. You could
-do so on a separate thread, and notify Digitus later (see the sample project for an example). 
-Again, there's a way to notify Digitus outside of a Digitus callback method.
+### Error
+
+The error callback is very important, it provides a lot of events that should be displayed
+in the UI. They're all covered in the switch statement below. The `Exception` parameter
+will always contain a human readable message, also.
 
 ```java
-Digitus.get().notifyPasswordValidation(boolean);
+@Override
+public void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e) {
+ switch (type) {
+     case FINGERPRINT_NOT_RECOGNIZED:
+         // Fingerprint wasn't recognized, try again
+         break;
+     case FINGERPRINTS_UNSUPPORTED:
+         // Fingerprints are not supported by the device (e.g. no sensor, or no API support).
+         // You should fallback to password authentication.
+         break;
+     case HELP_ERROR:
+         // A help message for the user, e.g. "Clean the sensor", "Swiped too fast, try again", etc.
+         // e.getMessage() should be displayed in UI so the user knows to try again.
+         break;
+     case PERMISSION_DENIED:
+         // The USE_FINGERPRINT permission was denied by the user or device.
+         // You should fallback to password authentication.
+         break;
+     case REGISTRATION_NEEDED:
+         // There are no fingerprints registered on the device.
+         // You can open the Security Settings system screen using the code below...
+         // ...but probably with a button click instead of doing it automatically.
+         digitus.openSecuritySettings();
+         break;
+     case UNRECOVERABLE_ERROR:
+         // An recoverable error occurred, no further callbacks are sent until you start listening again. 
+         break;   
+     }
+}
 ```
 
-# Garbage Collection Issues
+---
 
-If you run into issues with `Digitus.get()` returning null even after `init()`, Java might be garbage
-collecting the instance because it thinks it's no longer in use.
+# FingerprintDialog
 
-A solution to this is saving a reference to `Digitus` in your `Activity`. For an example:
+The `FingerprintDialog` is a pre-built authentication dialog based off of the Design Guidelines on
+fingerprints. It automatically handles the error cases above by displaying the errors to the
+user and falling back to password authentication if necessary.
 
+You show the dialog like this:
 
-```Java
-public class MainActivity extends AppCompatActivity implements DigitusCallback {
+```java
+FingerprintDialog.show(this, getString(R.string.app_name), 69);
+```
 
-    private Digitus mDigitus;
+It's pretty similar to `Digitus.init()`. The first parameter must be a `FragmentActivity` instance
+(or `AppCompatActivity`), which implements the `FingerprintDialog.Callback` interface:
 
+```java
+public class MainActivity extends AppCompatDialog implements FingerprintDialog.Callback {
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        mDigitus = Digitus.init(this, getString(R.string.app_name), 69);
+        // Show a FingerprintDialog
+        FingerprintDialog.show(this, getString(R.string.app_name), 69);
     }
     
-    // ... other callback methods and stuff
-    
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mDigitus = null;
-        Digitus.deinit();
+    public void onFingerprintDialogAuthenticated() {
+        Toast.makeText(this, "Authenticated successfully", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onFingerprintDialogVerifyPassword(final FingerprintDialog dialog, final String password) {
+        // Simulate server contact
+        mButton.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dialog.notifyPasswordValidation(password.equals("password"));
+            }
+        }, 1500);
     }
 }
 ```
 
-Now, whenever you make calls, you can reference `mDigitus` instead of `Digitus.get()`.
+`onFingerprintDialogAuthenticated()` is pretty straight forward. `onFingerprintDialogVerifyPassword()`
+is called when the user inputs a password and presses 'OK'. You need to validate the password
+and notify the dialog whether or not it's correct. The code above simulates a delay as if the
+password was validated with a remote server.
+
+If you need to get an instance of an open `FingerprintDialog` from somewhere in your `Activity`,
+you can use this:
+
+```java
+// Will be null if there's none
+FingerprintDialog dialog = FingerprintDialog.getVisible(this);
+```
+
+---
+
+# Misc
+
+There are other utility methods you can use to aid in making things easier. Note that these methods
+can't be invoked until Digitus is initialized with the static `init()` method; otherwise `get()`
+will return null.
+
+```java
+Digitus digitus = Digitus.get();
+
+// Whether or not device has API and hardware support
+boolean fingerprintAuthAvailable = digitus.isFingerprintAuthAvailable();
+
+// Whether or not device has fingerprints enrolled
+boolean fingerprintRegistered = digitus.isFingerprintRegistered();
+
+// Used in a section above, opens the device Security Settings where fingerprints can be enrolled
+digitus.openSecuritySettings();
+```

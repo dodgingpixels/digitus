@@ -43,9 +43,6 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback, 
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Updates callback, just in case it was moved to the FingerprintDialog.
-                // Otherwise, it was already set when you made a call to init().
-                Digitus.get().setCallback(MainActivity.this);
                 // Starts listening for a fingerprint
                 Digitus.get().startListening();
             }
