@@ -3,7 +3,7 @@
 Digitus is a library designed to make Fingerprint authentication using Nexus Imprint easier for developers.
 On API levels below Marshmallow, it will fall back to a password dialog.
 
-![Art](https://raw.githubusercontent.com/afollestad/digitus/master/art.jpg)
+![Art](https://raw.githubusercontent.com/afollestad/digitus/master/digitusshowcase.png)
 
 **Note**: this library is powered by [material-dialogs](https://github.com/afollestad/material-dialogs),
 depending on this library will automatically depend on Material Dialogs. 
