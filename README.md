@@ -10,7 +10,13 @@ depending on this library will automatically depend on Material Dialogs.
 
 # Sample
 
-Check out the sample project's code! You can also [download the latest APK](https://github.com/afollestad/digitus/raw/master/sample/sample.apk).
+Check out the sample project's code! You can also [download the latest APK](https://github.com/afollestad/digitus/raw/master/sample/sample.apk), 
+or [view it on Google Play](https://play.google.com/store/apps/details?id=com.afollestad.digitussample)!
+
+<a href="https://play.google.com/store/apps/details?id=com.afollestad.digitussample">
+  <img alt="Get it on Google Play"
+       src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" />
+</a>
 
 # Gradle Dependency
 
