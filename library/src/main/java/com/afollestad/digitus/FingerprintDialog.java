@@ -2,6 +2,7 @@ package com.afollestad.digitus;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -56,10 +57,15 @@ public class FingerprintDialog extends DialogFragment
     }
 
     public static <T extends FragmentActivity & Callback> FingerprintDialog show(T context, String keyName, int requestCode) {
-        FingerprintDialog dialog = new FingerprintDialog();
+        FingerprintDialog dialog = getVisible(context);
+        if (dialog != null)
+            dialog.dismiss();
+
+        dialog = new FingerprintDialog();
         Bundle args = new Bundle();
         args.putString("key_name", keyName);
         args.putInt("request_code", requestCode);
+        args.putBoolean("was_initialized", Digitus.get() != null && Digitus.get().mCallback == context);
         dialog.setArguments(args);
         dialog.show(context.getSupportFragmentManager(), TAG);
         return dialog;
@@ -144,7 +150,32 @@ public class FingerprintDialog extends DialogFragment
     @Override
     public void onPause() {
         super.onPause();
+        if (Digitus.get() != null)
+            Digitus.get().stopListening();
+    }
+
+    @Override
+    public void onCancel(DialogInterface dialog) {
+        super.onCancel(dialog);
+        redirectToActivity();
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        super.onDismiss(dialog);
+        redirectToActivity();
+    }
+
+    private void redirectToActivity() {
         Digitus.deinit();
+        if (getActivity() != null &&
+                getActivity() instanceof DigitusCallback &&
+                getArguments().getBoolean("was_initialized", false)) {
+            Digitus.init(getActivity(),
+                    getArguments().getString("key_name", ""),
+                    getArguments().getInt("request_code", -1),
+                    (DigitusCallback) getActivity());
+        }
     }
 
     @Override
@@ -262,6 +293,7 @@ public class FingerprintDialog extends DialogFragment
     }
 
     private void showError(CharSequence error) {
+        if (getActivity() == null) return;
         mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_error);
         mFingerprintStatus.setText(error);
         mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.warning_color));
@@ -272,6 +304,7 @@ public class FingerprintDialog extends DialogFragment
     Runnable mResetErrorTextRunnable = new Runnable() {
         @Override
         public void run() {
+            if (getActivity() == null) return;
             mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.hint_color));
             mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_hint));
             mFingerprintIcon.setImageResource(R.drawable.ic_fp_40px);
