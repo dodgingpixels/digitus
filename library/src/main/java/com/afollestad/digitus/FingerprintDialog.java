@@ -200,7 +200,8 @@ public class FingerprintDialog extends DialogFragment
         // Show the keyboard.
         mPassword.postDelayed(mShowKeyboardRunnable, 500);
         // Fingerprint is not used anymore. Stop listening for it.
-        mDigitus.stopListening();
+        if (mDigitus != null)
+            mDigitus.stopListening();
     }
 
     private void toggleButtonsEnabled(boolean enabled) {
