@@ -34,6 +34,10 @@ public class FingerprintDialog extends DialogFragment
         void onFingerprintDialogAuthenticated();
 
         void onFingerprintDialogVerifyPassword(FingerprintDialog dialog, String password);
+
+        void onFingerprintDialogStageUpdated(FingerprintDialog dialog, Stage stage);
+
+        void onFingerprintDialogCancelled();
     }
 
     static final long ERROR_TIMEOUT_MILLIS = 1600;
@@ -49,6 +53,7 @@ public class FingerprintDialog extends DialogFragment
     private ImageView mFingerprintIcon;
     private TextView mFingerprintStatus;
 
+    private Stage mLastStage;
     private Stage mStage = Stage.FINGERPRINT;
     private Digitus mDigitus;
     private Callback mCallback;
@@ -57,15 +62,19 @@ public class FingerprintDialog extends DialogFragment
     }
 
     public static <T extends FragmentActivity & Callback> FingerprintDialog show(T context, String keyName, int requestCode) {
+        return show(context, keyName, requestCode, true);
+    }
+
+    public static <T extends FragmentActivity & Callback> FingerprintDialog show(T context, String keyName, int requestCode, boolean cancelable) {
         FingerprintDialog dialog = getVisible(context);
         if (dialog != null)
             dialog.dismiss();
-
         dialog = new FingerprintDialog();
         Bundle args = new Bundle();
         args.putString("key_name", keyName);
         args.putInt("request_code", requestCode);
         args.putBoolean("was_initialized", Digitus.get() != null && Digitus.get().mCallback == context);
+        args.putBoolean("cancelable", cancelable);
         dialog.setArguments(args);
         dialog.show(context.getSupportFragmentManager(), TAG);
         return dialog;
@@ -91,6 +100,7 @@ public class FingerprintDialog extends DialogFragment
             throw new IllegalStateException("FingerprintDialog must be shown with show(Activity, String, int).");
         else if (savedInstanceState != null)
             mStage = (Stage) savedInstanceState.getSerializable("stage");
+        setCancelable(getArguments().getBoolean("cancelable", true));
 
         MaterialDialog dialog = new MaterialDialog.Builder(getActivity())
                 .title(R.string.sign_in)
@@ -98,10 +108,11 @@ public class FingerprintDialog extends DialogFragment
                 .positiveText(android.R.string.cancel)
                 .negativeText(R.string.use_password)
                 .autoDismiss(false)
+                .cancelable(getArguments().getBoolean("cancelable", true))
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) {
-                        materialDialog.dismiss();
+                        materialDialog.cancel();
                     }
                 })
                 .onNegative(new MaterialDialog.SingleButtonCallback() {
@@ -113,8 +124,7 @@ public class FingerprintDialog extends DialogFragment
                             verifyPassword();
                         }
                     }
-                })
-                .build();
+                }).build();
 
         final View v = dialog.getCustomView();
         assert v != null;
@@ -158,6 +168,8 @@ public class FingerprintDialog extends DialogFragment
     public void onCancel(DialogInterface dialog) {
         super.onCancel(dialog);
         redirectToActivity();
+        if (mCallback != null)
+            mCallback.onFingerprintDialogCancelled();
     }
 
     @Override
@@ -249,6 +261,10 @@ public class FingerprintDialog extends DialogFragment
     };
 
     private void updateStage(@Nullable MaterialDialog dialog) {
+        if (mLastStage == null || (mLastStage != mStage && mCallback != null)) {
+            mLastStage = mStage;
+            mCallback.onFingerprintDialogStageUpdated(this, mStage);
+        }
         if (dialog == null)
             dialog = (MaterialDialog) getDialog();
         if (dialog == null) return;

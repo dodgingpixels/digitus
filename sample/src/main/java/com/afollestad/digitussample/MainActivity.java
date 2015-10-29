@@ -3,6 +3,7 @@ package com.afollestad.digitussample;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -154,5 +155,15 @@ public class MainActivity extends AppCompatActivity implements DigitusCallback, 
                 dialog.notifyPasswordValidation(password.equals("password"));
             }
         }, 1500);
+    }
+
+    @Override
+    public void onFingerprintDialogStageUpdated(FingerprintDialog dialog, FingerprintDialog.Stage stage) {
+        Log.d("Digitus", "Dialog stage: " + stage.name());
+    }
+
+    @Override
+    public void onFingerprintDialogCancelled() {
+        Toast.makeText(this, R.string.dialog_cancelled, Toast.LENGTH_SHORT).show();
     }
 }

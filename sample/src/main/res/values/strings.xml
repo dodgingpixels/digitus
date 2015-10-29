@@ -12,5 +12,6 @@
     <string name="stop_listening">Stop listening</string>
     <string name="use_dialog">Use Dialog</string>
     <string name="dialog_authenticated">Authenticated via dialog!</string>
+    <string name="dialog_cancelled">Dialog cancelled</string>
 
 </resources>
