@@ -1,6 +1,5 @@
 package com.afollestad.digitus;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
@@ -18,19 +17,16 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 /**
  * @author Aidan Follestad (afollestad)
  */
-@TargetApi(Build.VERSION_CODES.M)
 class DigitusBase {
 
     protected DigitusBase(@NonNull Activity context, @NonNull String keyName, @NonNull DigitusCallback callback) {
@@ -39,27 +35,8 @@ class DigitusBase {
         mCallback = callback;
 
         mInputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mKeyguardManager = context.getSystemService(KeyguardManager.class);
-            mFingerprintManager = context.getSystemService(FingerprintManager.class);
-            try {
-                mKeyStore = KeyStore.getInstance("AndroidKeyStore");
-            } catch (KeyStoreException e) {
-                throw new RuntimeException("Failed to get an instance of KeyStore", e);
-            }
-            try {
-                mKeyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-            } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-                throw new RuntimeException("Failed to get an instance of KeyGenerator", e);
-            }
-            try {
-                mCipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
-                        + KeyProperties.BLOCK_MODE_CBC + "/"
-                        + KeyProperties.ENCRYPTION_PADDING_PKCS7);
-            } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-                throw new RuntimeException("Failed to get an instance of Cipher", e);
-            }
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            MUtils.initBase(context, this);
     }
 
     protected void deinitBase() {
@@ -72,7 +49,7 @@ class DigitusBase {
         mCipher = null;
     }
 
-    private String mKeyName;
+    protected String mKeyName;
     protected Context mContext;
     protected KeyguardManager mKeyguardManager;
     protected FingerprintManager mFingerprintManager;
@@ -95,17 +72,7 @@ class DigitusBase {
      * the key was generated.
      */
     protected boolean initCipher() {
-        try {
-            mKeyStore.load(null);
-            SecretKey key = (SecretKey) mKeyStore.getKey(mKeyName, null);
-            mCipher.init(Cipher.ENCRYPT_MODE, key);
-            return true;
-        } catch (KeyPermanentlyInvalidatedException e) {
-            return false;
-        } catch (KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
-                | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException("Failed to init Cipher", e);
-        }
+        return MUtils.initCipher(this);
     }
 
     /**
