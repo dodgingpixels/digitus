@@ -245,7 +245,8 @@ user and falling back to password authentication if necessary.
 You show the dialog like this:
 
 ```java
-FingerprintDialog.show(this, getString(R.string.app_name), 69);
+// Last boolean parameter is optional
+FingerprintDialog.show(this, getString(R.string.app_name), 69, true);
 ```
 
 It's pretty similar to `Digitus.init()`. The first parameter must be a `FragmentActivity` instance
@@ -284,6 +285,16 @@ public class MainActivity extends AppCompatDialog implements FingerprintDialog.C
                 Digitus.get().notifyPasswordValidation(password.equals("password"));
             }
         }, 1500);
+    }
+    
+    @Override
+    public void onFingerprintDialogStageUpdated(FingerprintDialog dialog, FingerprintDialog.Stage stage) {
+        Log.d("Digitus", "Dialog stage: " + stage.name());
+    }
+
+    @Override
+    public void onFingerprintDialogCancelled() {
+        Toast.makeText(this, "Authentication dialog cancelled", Toast.LENGTH_SHORT).show();
     }
 }
 ```
