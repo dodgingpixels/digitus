@@ -124,16 +124,12 @@ public class Digitus extends DigitusBase {
 
     @TargetApi(Build.VERSION_CODES.M)
     public boolean isFingerprintRegistered() {
-        if (!isFingerprintAuthAvailable()) return false;
-        //noinspection ResourceType
-        return mKeyguardManager.isKeyguardSecure() && mFingerprintManager.hasEnrolledFingerprints();
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                MUtils.isFingerprintRegistered(this);
     }
 
     public boolean isFingerprintAuthAvailable() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false;
-        int granted = ContextCompat.checkSelfPermission(mContext, Manifest.permission.USE_FINGERPRINT);
-        if (granted != PackageManager.PERMISSION_GRANTED) return false;
-        //noinspection ResourceType
-        return mFingerprintManager.isHardwareDetected() && mFingerprintManager.hasEnrolledFingerprints();
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                MUtils.isFingerprintAuthAvailable(this);
     }
 }
