@@ -41,7 +41,7 @@ dependencies {
 }
 ```
 
-[![Release](https://img.shields.io/github/release/afollestad/digitius.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
+[![Release](https://img.shields.io/github/release/afollestad/digitus.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
 
 # Testing Fingerprints from an Emulator
 
