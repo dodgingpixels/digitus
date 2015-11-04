@@ -35,7 +35,7 @@ Then, add Digitus to your dependencies:
 
 ```Gradle
 dependencies {
-    compile('com.github.afollestad:digitus:0.2.5@aar') {
+    compile('com.github.afollestad:digitus:0.2.6@aar') {
         transitive = true
     }
 }
