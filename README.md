@@ -20,18 +20,22 @@ or [view it on Google Play](https://play.google.com/store/apps/details?id=com.af
 
 # Gradle Dependency
 
-All the Gradle code below goes in `build.gradle` of your module (e.g. `app`), **not** `build.gradle` in
-the base of your project.
+### Repository
 
-First, add JitPack.io to your dependencies:
+Add this in your root `build.gradle` file (**not** your module `build.gradle` file):
 
-```Gradle
-repositories {
-    maven { url "https://jitpack.io" }
+```gradle
+allprojects {
+	repositories {
+		...
+		maven { url "https://jitpack.io" }
+	}
 }
 ```
 
-Then, add Digitus to your dependencies:
+### Dependency
+
+Add this to your module's `build.gradle` file:
 
 ```Gradle
 dependencies {
@@ -42,6 +46,8 @@ dependencies {
 ```
 
 [![Release](https://img.shields.io/github/release/afollestad/digitus.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
+
+---
 
 # Testing Fingerprints from an Emulator
 
