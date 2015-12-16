@@ -20,6 +20,9 @@ or [view it on Google Play](https://play.google.com/store/apps/details?id=com.af
 
 # Gradle Dependency
 
+[![Release](https://img.shields.io/github/release/afollestad/digitus.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
+[![Build Status](https://travis-ci.org/afollestad/digitus.svg)](https://travis-ci.org/afollestad/digitus)
+
 ### Repository
 
 Add this in your root `build.gradle` file (**not** your module `build.gradle` file):
@@ -44,8 +47,6 @@ dependencies {
     }
 }
 ```
-
-[![Release](https://img.shields.io/github/release/afollestad/digitus.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
 
 ---
 
