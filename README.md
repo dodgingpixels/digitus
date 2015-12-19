@@ -22,6 +22,7 @@ or [view it on Google Play](https://play.google.com/store/apps/details?id=com.af
 
 [![Release](https://img.shields.io/github/release/afollestad/digitus.svg?label=jitpack)](https://jitpack.io/#afollestad/digitus)
 [![Build Status](https://travis-ci.org/afollestad/digitus.svg)](https://travis-ci.org/afollestad/digitus)
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
 ### Repository
 
