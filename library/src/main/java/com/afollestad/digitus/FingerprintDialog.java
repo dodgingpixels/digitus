@@ -322,7 +322,7 @@ public class FingerprintDialog extends DialogFragment
         @Override
         public void run() {
             if (getActivity() == null) return;
-            mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.hint_color));
+            mFingerprintStatus.setTextColor(Utils.resolveColor(getActivity(), android.R.attr.textColorSecondary));
             mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_hint));
             mFingerprintIcon.setImageResource(R.drawable.ic_fp_40px);
         }

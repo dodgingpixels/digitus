@@ -46,7 +46,7 @@
         android:fontFamily="sans-serif-ligjt"
         android:gravity="center_vertical"
         android:text="@string/fingerprint_hint"
-        android:textColor="@color/hint_color"
+        android:textColor="?android:textColorSecondary"
         android:textSize="@dimen/md_content_textsize"
         tools:ignore="UnusedAttribute" />
 
