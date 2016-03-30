@@ -11,8 +11,8 @@ android {
         applicationId "com.afollestad.digitussample"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 9
-        versionName "0.2.8"
+        versionCode 10
+        versionName "0.2.9"
     }
     buildTypes {
         release {
@@ -23,6 +23,6 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile 'com.android.support:appcompat-v7:23.2.1'
     compile project(':library')
 }
