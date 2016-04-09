@@ -43,7 +43,7 @@ Add this to your module's `build.gradle` file:
 
 ```Gradle
 dependencies {
-    compile('com.github.afollestad:digitus:0.2.9@aar') {
+    compile('com.github.afollestad:digitus:0.2.10@aar') {
         transitive = true
     }
 }
