@@ -1,5 +1,11 @@
 apply plugin: 'com.android.library'
 
+ext {
+    PUBLISH_GROUP_ID = 'com.afollestad'
+    PUBLISH_ARTIFACT_ID = 'material-camera'
+    PUBLISH_VERSION = '0.2.6'
+}
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
@@ -27,3 +33,5 @@ dependencies {
         transitive = true
     }
 }
+
+apply from: 'https://raw.githubusercontent.com/afollestad/aidanfollestad.com/master/android-release-aar.gradle'
