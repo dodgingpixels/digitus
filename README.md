@@ -30,7 +30,7 @@ Add this to your module's `build.gradle` file:
 dependencies {
     // .. other dependencies
 
-    compile 'com.afollestad:digitus:0.2.11'
+    compile 'com.afollestad:digitus:0.2.12'
 }
 ```
 
