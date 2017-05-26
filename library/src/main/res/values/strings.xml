@@ -12,5 +12,7 @@
     <string name="password_not_recognized">Password not recognized. Try again.</string>
     <string name="fingerprint_success">Fingerprint recognized</string>
     <string name="use_password">Use password</string>
+    <string name="initializing">Initializing…</string>
+    <string name="no_fingerprints_registered">No fingerprints are registered.</string>
 
 </resources>

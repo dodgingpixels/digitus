@@ -1,13 +1,15 @@
 package com.afollestad.digitus;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.KeyguardManager;
+import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.NonNull;
+import android.view.inputmethod.InputMethodManager;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -25,17 +27,21 @@ import javax.crypto.SecretKey;
 /**
  * @author Aidan Follestad (afollestad)
  */
-@TargetApi(Build.VERSION_CODES.M)
 class DigitusBase {
 
-    protected <T extends Activity & DigitusCallback> DigitusBase(T context, String keyName) {
+    protected DigitusBase(@NonNull Activity context, @NonNull String keyName, @NonNull DigitusCallback callback) {
+        mContext = context;
         mKeyName = keyName;
-        mCallback = context;
+        mCallback = callback;
+
+        mInputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            MUtils.initBase(context, this);
     }
 
     protected void deinitBase() {
         mKeyName = null;
-        mCallback = null;
+        mContext = null;
         mKeyguardManager = null;
         mFingerprintManager = null;
         mKeyStore = null;
@@ -43,13 +49,19 @@ class DigitusBase {
         mCipher = null;
     }
 
-    private String mKeyName;
-    protected DigitusCallback mCallback;
+    protected String mKeyName;
+    protected Context mContext;
     protected KeyguardManager mKeyguardManager;
     protected FingerprintManager mFingerprintManager;
+    protected InputMethodManager mInputMethodManager;
     protected KeyStore mKeyStore;
     protected KeyGenerator mKeyGenerator;
     protected Cipher mCipher;
+    protected DigitusCallback mCallback;
+
+    public void setCallback(@NonNull DigitusCallback callback) {
+        this.mCallback = callback;
+    }
 
     /**
      * Initialize the {@link Cipher} instance with the created key in the {@link #recreateKey()}
@@ -60,17 +72,7 @@ class DigitusBase {
      * the key was generated.
      */
     protected boolean initCipher() {
-        try {
-            mKeyStore.load(null);
-            SecretKey key = (SecretKey) mKeyStore.getKey(mKeyName, null);
-            mCipher.init(Cipher.ENCRYPT_MODE, key);
-            return true;
-        } catch (KeyPermanentlyInvalidatedException e) {
-            return false;
-        } catch (KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
-                | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException("Failed to init Cipher", e);
-        }
+        return MUtils.initCipher(this);
     }
 
     /**
