@@ -3,23 +3,24 @@
 Digitus is a library designed to make Fingerprint authentication using Nexus Imprint easier for developers.
 On API levels below Marshmallow, it will fall back to a password dialog.
 
-![Art](https://raw.githubusercontent.com/afollestad/digitus/master/digitusshowcase.png)
+**Credits**: this library is based on the original Digitus created by [afollestad](https://github.com/afollestad)
+
+![Art](https://raw.githubusercontent.com/dodgingpixels/digitus/master/digitusshowcase.png)
 
 **Note**: this library is powered by [material-dialogs](https://github.com/afollestad/material-dialogs),
 depending on this library will automatically depend on Material Dialogs. 
 
 # Sample
 
-Check out the sample project's code! You can also [download the latest APK](https://github.com/afollestad/digitus/raw/master/sample/sample.apk), 
+Check out the sample project's code! You can also [download the latest APK](https://github.com/dodgingpixels/digitus/raw/master/sample/sample.apk), 
 or [view it on Google Play](https://play.google.com/store/apps/details?id=com.afollestad.digitussample)!
 
 # Gradle Dependency
 
-[ ![jCenter](https://api.bintray.com/packages/drummer-aidan/maven/digitus/images/download.svg) ](https://bintray.com/drummer-aidan/maven/digitus/_latestVersion)
-[![Build Status](https://travis-ci.org/afollestad/digitus.svg)](https://travis-ci.org/afollestad/digitus)
+[ ![jCenter](https://api.bintray.com/packages/dodgingpixels/maven/digitus/images/download.svg) ](https://bintray.com/dodgingpixels/maven/digitus/_latestVersion)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-The Gradle dependency is available via [jCenter](https://bintray.com/drummer-aidan/maven/digitus/view).
+The Gradle dependency is available via [jCenter](https://bintray.com/dodgingpixels/digitus/digitus).
 jCenter is the default Maven repository used by Android Studio.
 
 ### Dependency
@@ -30,7 +31,7 @@ Add this to your module's `build.gradle` file:
 dependencies {
     // .. other dependencies
 
-    compile 'com.afollestad:digitus:0.2.12'
+    compile 'com.dodgingpixels:digitus:0.3.0'
 }
 ```
 
@@ -50,17 +51,17 @@ adb -e emu finger touch finger-id
 
 # Tutorial
 
-1. [Initialization and De-initialization](https://github.com/afollestad/digitus#initialization-and-de-initialization)
-    1. [Initialization](https://github.com/afollestad/digitus#initialization)
-    2. [Permissions Result](https://github.com/afollestad/digitus#permissions-result)
-    3. [De-initialization](https://github.com/afollestad/digitus#de-initialization)
-2. [Callbacks](https://github.com/afollestad/digitus#callbacks)
-    1. [Ready](https://github.com/afollestad/digitus#ready)
-    2. [Listening](https://github.com/afollestad/digitus#listening)
-    3. [Authenticated](https://github.com/afollestad/digitus#authenticated)
-    4. [Error](https://github.com/afollestad/digitus#error)
-3. [FingerprintDialog](https://github.com/afollestad/digitus#fingerprint-dialog)
-4. [Misc](https://github.com/afollestad/digitus#misc)
+1. [Initialization and De-initialization](https://github.com/dodgingpixels/digitus#initialization-and-de-initialization)
+    1. [Initialization](https://github.com/dodgingpixels/digitus#initialization)
+    2. [Permissions Result](https://github.com/dodgingpixels/digitus#permissions-result)
+    3. [De-initialization](https://github.com/dodgingpixels/digitus#de-initialization)
+2. [Callbacks](https://github.com/dodgingpixels/digitus#callbacks)
+    1. [Ready](https://github.com/dodgingpixels/digitus#ready)
+    2. [Listening](https://github.com/dodgingpixels/digitus#listening)
+    3. [Authenticated](https://github.com/dodgingpixels/digitus#authenticated)
+    4. [Error](https://github.com/dodgingpixels/digitus#error)
+3. [FingerprintDialog](https://github.com/dodgingpixels/digitus#fingerprint-dialog)
+4. [Misc](https://github.com/dodgingpixels/digitus#misc)
     
 ---
     
@@ -87,7 +88,7 @@ The third parameter is a request code which gets passed back to the `Activity` i
  first parameter later. It should be a unique integer that you don't use for permission 
  requests elsewhere in the same Activity. It should be an 8-bit (2 in length) integer.
 
-The fourth parameter is a callback that receives certain events that are discussed in [Callbacks](https://github.com/afollestad/digitus#callbacks).
+The fourth parameter is a callback that receives certain events that are discussed in [Callbacks](https://github.com/dodgingpixels/digitus#callbacks).
 
 ### Permissions Result
 
