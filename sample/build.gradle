@@ -16,7 +16,7 @@ android {
     }
     defaultConfig {
         applicationId "com.afollestad.digitussample"
-        minSdkVersion 14
+        minSdkVersion 15
         targetSdkVersion TARGET_SDK
         versionCode 12
         versionName PUBLISH_VERSION
