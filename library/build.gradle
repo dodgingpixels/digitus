@@ -32,7 +32,7 @@ android {
 
 dependencies {
     compile "com.android.support:appcompat-v7:$GOOGLE_LIBS"
-    compile 'com.afollestad.material-dialogs:core:0.8.6.0'
+    compile 'com.afollestad.material-dialogs:core:0.9.4.5'
 }
 
 apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
