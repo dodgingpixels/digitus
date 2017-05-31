@@ -33,6 +33,7 @@ android {
 dependencies {
     compile "com.android.support:appcompat-v7:$GOOGLE_LIBS"
     compile 'com.afollestad.material-dialogs:core:0.9.4.5'
+    compile 'com.mattprecious.swirl:swirl:1.0.0'
 }
 
 apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'

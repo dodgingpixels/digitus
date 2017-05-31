@@ -3,6 +3,7 @@ package com.afollestad.digitus;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.internal.MDTintHelper;
+import com.mattprecious.swirl.SwirlView;
 
 /**
  * A dialog which uses fingerprint APIs to authenticate the user, and falls back to password
@@ -52,6 +54,7 @@ public class FingerprintDialog extends DialogFragment
     private TextView mPasswordDescriptionTextView;
     private TextView mNewFingerprintEnrolledTextView;
     private ImageView mFingerprintIcon;
+    private SwirlView mFingerprintSwirl;
     private TextView mFingerprintStatus;
 
     private Stage mLastStage;
@@ -115,7 +118,9 @@ public class FingerprintDialog extends DialogFragment
 
         MaterialDialog dialog = new MaterialDialog.Builder(getActivity())
                 .title(R.string.sign_in)
-                .customView(R.layout.fingerprint_dialog_container, false)
+                .customView((Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
+                        R.layout.swirl_dialog_container :
+                        R.layout.fingerprint_dialog_container), false)
                 .positiveText(android.R.string.cancel)
                 .negativeText(R.string.use_password)
                 .autoDismiss(false)
@@ -146,7 +151,11 @@ public class FingerprintDialog extends DialogFragment
         mPasswordDescriptionTextView = (TextView) v.findViewById(R.id.password_description);
         mUseFingerprintFutureCheckBox = (CheckBox) v.findViewById(R.id.use_fingerprint_in_future_check);
         mNewFingerprintEnrolledTextView = (TextView) v.findViewById(R.id.new_fingerprint_enrolled_description);
-        mFingerprintIcon = (ImageView) v.findViewById(R.id.fingerprint_icon);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mFingerprintSwirl = (SwirlView) v.findViewById(R.id.fingerprint_icon);
+        } else {
+            mFingerprintIcon = (ImageView) v.findViewById(R.id.fingerprint_icon);
+        }
         mFingerprintStatus = (TextView) v.findViewById(R.id.fingerprint_status);
         mFingerprintStatus.setText(R.string.initializing);
 
@@ -322,7 +331,11 @@ public class FingerprintDialog extends DialogFragment
 
     private void showError(CharSequence error) {
         if (getActivity() == null) return;
-        mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_error);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mFingerprintSwirl.setState(SwirlView.State.ERROR, true);
+        } else {
+            mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_error);
+        }
         mFingerprintStatus.setText(error);
         mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.warning_color));
         mFingerprintStatus.removeCallbacks(mResetErrorTextRunnable);
@@ -335,7 +348,11 @@ public class FingerprintDialog extends DialogFragment
             if (getActivity() == null) return;
             mFingerprintStatus.setTextColor(Utils.resolveColor(getActivity(), android.R.attr.textColorSecondary));
             mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_hint));
-            mFingerprintIcon.setImageResource(R.drawable.ic_fp_40px);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mFingerprintSwirl.setState(SwirlView.State.ON, true);
+            } else {
+                mFingerprintIcon.setImageResource(R.drawable.ic_fp_40px);
+            }
         }
     };
 
@@ -348,6 +365,8 @@ public class FingerprintDialog extends DialogFragment
 
     @Override
     public void onDigitusListening(boolean newFingerprint) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            mFingerprintSwirl.setState(SwirlView.State.ON, true);
         mFingerprintStatus.setText(R.string.fingerprint_hint);
         if (newFingerprint)
             mStage = Stage.NEW_FINGERPRINT_ENROLLED;
@@ -358,10 +377,14 @@ public class FingerprintDialog extends DialogFragment
     public void onDigitusAuthenticated(Digitus digitus) {
         toggleButtonsEnabled(false);
         mFingerprintStatus.removeCallbacks(mResetErrorTextRunnable);
-        mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_success);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mFingerprintSwirl.setState(SwirlView.State.OFF, true);
+        } else {
+            mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_success);
+        }
         mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.success_color));
         mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_success));
-        mFingerprintIcon.postDelayed(new Runnable() {
+        mFingerprintStatus.postDelayed(new Runnable() {
             @Override
             public void run() {
                 mCallback.onFingerprintDialogAuthenticated();
@@ -379,7 +402,7 @@ public class FingerprintDialog extends DialogFragment
             case UNRECOVERABLE_ERROR:
             case PERMISSION_DENIED:
                 showError(e.getMessage());
-                mFingerprintIcon.postDelayed(new Runnable() {
+                mFingerprintStatus.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         goToBackup(null);
