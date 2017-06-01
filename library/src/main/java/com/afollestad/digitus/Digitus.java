@@ -66,7 +66,12 @@ public class Digitus extends DigitusBase {
                         new Exception("Fingerprint authentication is not available to this device."));
             } else if (mInstance.isFingerprintRegistered()) {
                 mInstance.mIsReady = true;
-                mInstance.recreateKey();
+                try {
+                    mInstance.recreateKey();
+                } catch (RuntimeException e) {
+                    mInstance.mCallback.onDigitusError(mInstance, DigitusErrorType.FINGERPRINTS_UNSUPPORTED,
+                            new Exception("Fingerprint authentication is not available to this device."));
+                }
                 mInstance.mCallback.onDigitusReady(mInstance);
             } else {
                 mInstance.mCallback.onDigitusError(mInstance, DigitusErrorType.REGISTRATION_NEEDED,
