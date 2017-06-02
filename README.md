@@ -10,11 +10,6 @@ On API levels below Marshmallow, it will fall back to a password dialog.
 **Note**: this library is powered by [material-dialogs](https://github.com/afollestad/material-dialogs),
 depending on this library will automatically depend on Material Dialogs. 
 
-# Sample
-
-Check out the sample project's code! You can also [download the latest APK](https://github.com/dodgingpixels/digitus/raw/master/sample/sample.apk), 
-or [view it on Google Play](https://play.google.com/store/apps/details?id=com.afollestad.digitussample)!
-
 # Gradle Dependency
 
 [ ![jCenter](https://api.bintray.com/packages/dodgingpixels/maven/digitus/images/download.svg) ](https://bintray.com/dodgingpixels/maven/digitus/_latestVersion)
@@ -31,7 +26,7 @@ Add this to your module's `build.gradle` file:
 dependencies {
     // .. other dependencies
 
-    compile 'com.dodgingpixels:digitus:0.3.0'
+    compile 'com.dodgingpixels:digitus:0.4.0'
 }
 ```
 
@@ -61,7 +56,8 @@ adb -e emu finger touch finger-id
     3. [Authenticated](https://github.com/dodgingpixels/digitus#authenticated)
     4. [Error](https://github.com/dodgingpixels/digitus#error)
 3. [FingerprintDialog](https://github.com/dodgingpixels/digitus#fingerprint-dialog)
-4. [Misc](https://github.com/dodgingpixels/digitus#misc)
+4. [Style](https://github.com/dodgingpixels/digitus#style)
+5. [Misc](https://github.com/dodgingpixels/digitus#misc)
     
 ---
     
@@ -304,6 +300,19 @@ you can use this:
 ```java
 // Will be null if there's none
 FingerprintDialog dialog = FingerprintDialog.getVisible(this);
+```
+
+---
+
+# Style
+
+This fork of Digitus uses [Swirl](https://github.com/mattprecious/swirl), an animated fingerprint icon. Since Swirl uses animated vector drawables, default colors cannot be provided and must be specified in your theme.
+
+```xml
+<style name="Theme.YourApp" parent="@android:style/Theme.AppCompat">
+  <item name="swirl_ridgeColor">?android:attr/textColorSecondary</item>
+  <item name="swirl_errorColor">?android:attr/colorAccent</item>
+</style>
 ```
 
 ---
