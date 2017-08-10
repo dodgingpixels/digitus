@@ -381,8 +381,8 @@ public class FingerprintDialog extends DialogFragment
             mFingerprintSwirl.setState(SwirlView.State.OFF, true);
         } else {
             mFingerprintIcon.setImageResource(R.drawable.ic_fingerprint_success);
+            mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.success_color));
         }
-        mFingerprintStatus.setTextColor(ContextCompat.getColor(getActivity(), R.color.success_color));
         mFingerprintStatus.setText(getResources().getString(R.string.fingerprint_success));
         mFingerprintStatus.postDelayed(new Runnable() {
             @Override
