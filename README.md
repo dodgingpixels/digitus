@@ -26,7 +26,7 @@ Add this to your module's `build.gradle` file:
 dependencies {
     // .. other dependencies
 
-    compile 'com.dodgingpixels:digitus:0.4.0'
+    compile 'com.dodgingpixels:digitus:0.4.1'
 }
 ```
 
